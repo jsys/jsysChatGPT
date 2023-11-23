@@ -1,0 +1,110 @@
+<html lang="fr">
+<head>
+    <title>jsysChatGPT</title>
+    <style>
+        body, input {
+            font-family: "system-ui";
+            font-size: 16px;
+        }
+
+        #question {
+            position: absolute;
+            bottom: 8px;
+            width: calc(100% - 16px);
+        }
+
+        .role {
+            font-weight: 600;
+        }
+
+        .message {
+            white-space: pre-line;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<h1>jsysChat</h1>
+<div>Version minimale d'un chat utilisant l'api de chatGPT en streaming avec la clé api à définir dans le fichier jsysChatProxy.php</div>
+<hr>
+<div id="chat"></div>
+<input type="text" id="question" placeholder="Message ChatGPT..." value="">
+</body>
+
+<script>
+    const chat = document.getElementById('chat');
+    const question = document.getElementById('question');
+
+    // Lorsqu'on presse Enter, on ajoute une question, ce qui appelle l'api de chatGPT pour obtenir la réponse
+    question.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && question.value.trim() !== '') {
+            addQuestion(question.value);
+        }
+    });
+
+    const addMessage = function (role, message) {
+        const roleToName = {
+            'user': 'You',
+            'assistant': 'ChatGPT'
+        }
+        let chunk = '';
+        if (!message) {
+            chunk = ' chunk';
+        }
+        chat.insertAdjacentHTML('beforeend', '<div class="message ' + role + '"><div class="role">' + roleToName[role] + '</div><div class="content' + chunk + '">' + message + '</div></div>');
+    }
+    const addQuestion = function (message) {
+        addMessage('user', message);
+        question.value = '';
+        addReponse();
+    }
+
+    // Interroge l'api de chatGPT pour récupérer la réponse
+    const addReponse = function () {
+        let messages = getMessages();
+        console.log(JSON.stringify(messages));
+
+        addMessage('assistant', '');
+        let formData = new FormData();
+        formData.append('messages', JSON.stringify(messages));
+        fetch('jsysChatProxy.php', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            let chunk = document.getElementsByClassName('chunk')[0];
+            console.log(response);
+            if (!response.ok) {
+                throw new Error('La requête a échoué: ' + response.status);
+            }
+            const reader = response.body.getReader();
+            const readChunk = ({done, value}) => {
+                if (done) {
+                    chunk.classList.remove('chunk');
+                    return;
+                }
+                chunk.textContent += (new TextDecoder().decode(value));
+                reader.read().then(readChunk);
+            };
+            reader.read().then(readChunk);
+        }).catch(error => {
+            console.error('Erreur lors de la requête:', error);
+        });
+    }
+
+    // Récupère tous les messages à l'écran en json pret pour l'api de chatGPT
+    const getMessages = function () {
+        const messages = document.getElementsByClassName("message");
+        const liste = [];
+        for (let i = 0; i < messages.length; i++) {
+            liste.push({
+                role: messages[i].classList.value.split(' ')[1], // user ou assistant
+                content: messages[i].getElementsByClassName('content')[0].textContent
+            })
+        }
+        return liste;
+    }
+
+    //addQuestion('Quelle est la hauteur de la tour Eiffel ?');
+</script>
+
+</html>
