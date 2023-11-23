@@ -2,25 +2,10 @@
 <head>
     <title>jsysChatGPT</title>
     <style>
-        body, input {
-            font-family: "system-ui";
-            font-size: 16px;
-        }
-
-        #question {
-            position: absolute;
-            bottom: 8px;
-            width: calc(100% - 16px);
-        }
-
-        .role {
-            font-weight: 600;
-        }
-
-        .message {
-            white-space: pre-line;
-            padding-bottom: 20px;
-        }
+        body, input { font-family: "system-ui"; font-size: 16px; }
+        #question { position: absolute; bottom: 8px; width: calc(100% - 16px); }
+        .role { font-weight: 600; }
+        .message { white-space: pre-line; padding-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -42,6 +27,7 @@
         }
     });
 
+    // Ajoute un message à l'écran
     const addMessage = function (role, message) {
         const roleToName = {
             'user': 'You',
@@ -53,6 +39,8 @@
         }
         chat.insertAdjacentHTML('beforeend', '<div class="message ' + role + '"><div class="role">' + roleToName[role] + '</div><div class="content' + chunk + '">' + message + '</div></div>');
     }
+
+    // Ajoute une question de l'utilisateur
     const addQuestion = function (message) {
         addMessage('user', message);
         question.value = '';
@@ -91,7 +79,7 @@
         });
     }
 
-    // Récupère tous les messages à l'écran en json pret pour l'api de chatGPT
+    // Récupère tous les messages à l'écran en json pour l'api de chatGPT
     const getMessages = function () {
         const messages = document.getElementsByClassName("message");
         const liste = [];
@@ -104,7 +92,6 @@
         return liste;
     }
 
-    //addQuestion('Quelle est la hauteur de la tour Eiffel ?');
 </script>
 
 </html>
